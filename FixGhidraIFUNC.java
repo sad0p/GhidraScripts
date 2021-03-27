@@ -1,8 +1,6 @@
 /*
     sets plt thunks associated with *_IRELATIVE relocations to the resolver function.
     This works around Ghidra mishandling of *_IRELATIVE relocation types.
-    Written for and tested on x86/x64 Linux.
-    -- sad0p
 */
 
 import java.util.*;
@@ -78,14 +76,15 @@ public class FixGhidraIFUNC extends GhidraScript {
         }
 
         while(relSectionSize != 0) {
+            relSectionSize = relSectionSize - relEntrySize;
             if(is64Bit) {
                 offset = relSection.readLong();
                 info = relSection.readLong();
                 if(info != R_X86_64_IRELATIVE) continue;
                 addend = relSection.readLong();
             }else {
-                offset = (int)relSection.readInt();
-                info = (int)relSection.readInt();
+                offset = (long)relSection.readInt();
+                info = (long)relSection.readInt();
                 if(info != R_386_IRELATIVE) continue;
                 addend = (long)currentProgram.getMemory().getInt(currentAddress.getNewAddress(offset));
             }
@@ -97,7 +96,6 @@ public class FixGhidraIFUNC extends GhidraScript {
                 relocRecord.resolverAddr = currentAddress.getNewAddress(addend);
                 irelativeRelocList.add(relocRecord);
             }
-            relSectionSize = relSectionSize - relEntrySize;
         }
 
         println("Total of " + irelativeList.size() + " irelative relocation types found");
